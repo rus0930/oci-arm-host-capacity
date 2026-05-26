@@ -1,6 +1,8 @@
 name: Run script
 
 on:
+  schedule:
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -8,16 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Install dependencies
         run: composer install
+
+      - name: Setup private key
+        run: |
+          echo "${{ secrets.OCI_KEY_VALUE }}" > /tmp/oci_key.pem
+          chmod 600 /tmp/oci_key.pem
+
       - name: Run script
         run: php index.php
         env:
+          OCI_REGION: ${{ secrets.OCI_REGION }}
           OCI_USER_ID: ${{ secrets.OCI_USER_ID }}
           OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_ID }}
           OCI_KEY_FINGERPRINT: ${{ secrets.OCI_KEY_FINGERPRINT }}
-          OCI_PRIVATE_KEY_FILENAME: ${{ secrets.OCI_PRIVATE_KEY_FILENAME }}
-          OCI_REGION: ${{ secrets.OCI_REGION }}
+          OCI_PRIVATE_KEY_FILENAME: /tmp/oci_key.pem
           OCI_SHAPE: ${{ secrets.OCI_SHAPE }}
           OCI_OCPUS: ${{ secrets.OCI_OCPUS }}
           OCI_MEMORY_IN_GBS: ${{ secrets.OCI_MEMORY_IN_GBS }}
